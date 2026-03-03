@@ -10,6 +10,7 @@ app_enhanced.py - Streamlit Application V4.0 (COMPLETE REDESIGN)
 ✅ Markdown table formatting
 ✅ LaTeX equation rendering
 ✅ Comprehensive metadata display
+✅ Fixed Streamlit Session State & Callback Bugs
 """
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -194,6 +195,8 @@ if 'doc_info' not in st.session_state:
     st.session_state.doc_info = None
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
+if 'current_query' not in st.session_state:
+    st.session_state.current_query = ""
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -503,33 +506,49 @@ else:
     
     st.markdown("---")
     
+    # --- CALLBACK FOR SUBMISSION ---
+    def handle_submit():
+        """Callback to handle text submission cleanly"""
+        q = st.session_state.query_input
+        if q:
+            # Save the query to process it
+            st.session_state.current_query = q
+            # Clear the input widget
+            st.session_state.query_input = ""
+
     # Query input
-    query = st.text_input(
+    st.text_input(
         "Your Question",
         placeholder="e.g., Explain Equation 3, Show Table 1, What are the main results?",
-        key="query_input"
+        key="query_input",
+        on_change=handle_submit
     )
     
     col1, col2 = st.columns([1, 5])
     
     with col1:
-        submit = st.button("🚀 Ask", use_container_width=True, type="primary")
+        st.button("🚀 Ask", use_container_width=True, type="primary", on_click=handle_submit)
     
     with col2:
         if st.button("🗑️ Clear History", use_container_width=True):
             st.session_state.chat_history = []
             st.rerun()
-    
-    if submit and query:
+            
+    # --- PROCESS THE QUERY ---
+    if st.session_state.current_query:
+        query_to_process = st.session_state.current_query
+        
+        # Reset the saved query so it doesn't process endlessly
+        st.session_state.current_query = ""
+        
         with st.spinner("🤔 Thinking..."):
-            result = query_system(query)
+            result = query_system(query_to_process)
         
         if result:
             st.session_state.chat_history.append({
-                'query': query,
+                'query': query_to_process,
                 'result': result
             })
-            # Clear input by rerunning
             st.rerun()
     
     # Display chat history

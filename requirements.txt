@@ -29,3 +29,5 @@ pandas>=2.0.0
 # Optional (for better results)
 transformers>=4.35.0  # For better embeddings
 torch>=2.0.0  # For embeddings
+
+pdfplumber
